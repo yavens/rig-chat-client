@@ -1,0 +1,9 @@
+
+{% if messages.len() == 0 %} 
+    <p id="placeholder" class="self-center mt-auto mb-auto text-gray-200 text-2xl">No Chat History...</p>
+{% else %}
+    {% for message in messages %} 
+        {% let index = loop.index %}
+        {% include "message.html" %}
+    {% endfor %}
+{% endif %}
