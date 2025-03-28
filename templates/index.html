@@ -13,43 +13,10 @@
 
     <script src="/static/js/index.js"></script>
 
-    <link href="/static/main.css" rel="stylesheet" />
-    <link href="/static/index.css" rel="stylesheet" />
+    <link href="/static/css/main.css" rel="stylesheet" />
+    <link href="/static/css/index.css" rel="stylesheet" />
     <title>Page</title>
 
-    <style>
-      .message.htmx-added {
-        opacity: 0;
-        transform: scale(0%);
-      }
-
-      .message {
-        opacity: 1;
-        transform: scale(100%);
-
-        transition: all 0.2s ease-in-out;
-      }
-
-      .message .text {
-        animation: fade-in 0.2s ease-in-out;
-      }
-
-      .message img {
-        border-radius: var(--radius-xl);
-      }
-
-      .message > p:not(:first-child) {
-        margin-top: 0.5rem;
-      }
-      @keyframes fade-in {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
-      }
-    </style>
   </head>
   <body
     hx-ext="sse"

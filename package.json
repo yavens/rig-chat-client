@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch:tailwind": "npx @tailwindcss/cli -i ./assets/main.css -o ./static/main.css --watch",
+    "watch:tailwind": "npx @tailwindcss/cli -i ./assets/main.css -o ./static/css/main.css --watch",
     "watch:rust": "cargo watch -w templates -w src -x run",
     "dev": "npx concurrently -k \"npm run watch:tailwind\" \"npm run watch:rust\""
   },
