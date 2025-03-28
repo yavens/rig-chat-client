@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
+
+    <!-- HTMX and HTMX SSE extension -->
     <script
       src="https://unpkg.com/htmx.org@2.0.4"
       integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
@@ -15,8 +17,7 @@
 
     <link href="/static/css/main.css" rel="stylesheet" />
     <link href="/static/css/index.css" rel="stylesheet" />
-    <title>Page</title>
-
+    <title>Rig Chat Client</title>
   </head>
   <body
     hx-ext="sse"
@@ -27,12 +28,15 @@
       id="app"
       class="flex flex-col h-full w-full max-w-3xl px-4 gap-4"
     >
+      <!-- Responsible for listening to chat history events -->
       <div
         sse-swap="chat_history"
         hx-target="#chat-history"
         hx-swap="innerHTML settle:none"
         style="display: none"
       ></div>
+      <!-- Responsible for listening to play_audio and queue_audio -->
+      <!-- SSE related events only fire in JS when an element is set to listen -->
       <div
         sse-swap="play_audio, queue_audio"
         hx-swap="none"
@@ -47,9 +51,11 @@
           hx-swap="beforeend"
           hx-on="afterSettle: scrollToResponse()"
         >
+          <!-- Loads the current chat history, removes need for additional loading -->
           {{ chat_history|safe }}
         </div>
         <div class="absolute bottom-4 w-full overflow-clip px-4">
+          <!-- Set the default prompt state to empty -->
           {% let prompt = "" %} {% include "prompt.html" %}
         </div>
       </div>
