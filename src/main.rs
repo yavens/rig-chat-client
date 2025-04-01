@@ -28,30 +28,18 @@ async fn main() -> Result<(), anyhow::Error> {
         8080
     };
 
-    let history = Data::new(Mutex::new(PromptState::default()));
+    let history: Data<Mutex<PromptState>> = Data::new(Mutex::new(PromptState::default()));
 
     let server = HttpServer::new(move || {
-        let agent: Data<rig::agent::Agent<openai::CompletionModel>> = Data::new(
-            openai::Client::from_env()
-                .agent(openai::GPT_4O)
-                .tool(GenerateImage {})
-                .build(),
-        );
-
         App::new()
             .wrap(middleware::Logger::default())
-            .app_data(agent)
-            .app_data(Data::clone(&history))
+            
             .app_data(PayloadConfig::new(1000000 * 250))
             .app_data(FormConfig::default().limit(1000000 * 250))
+            
             .service(Files::new("/static", "./static"))
+            
             .service(site::index::get)
-            // Route: /api/prompt
-            .service(api::prompt::post)
-            // Route: /api/recording
-            .service(api::recording::get)
-            .service(api::recording::post)
-            .service(api::connect::get)
     });
 
     let _ = server.bind(("0.0.0.0", port))?.run().await?;
