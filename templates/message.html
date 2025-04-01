@@ -1,0 +1,26 @@
+{% match message %} 
+  {% when Message::User with { content } %}
+    <div
+      class="message text-gray-200 bg-gray-600 rounded-xl px-2 py-1 self-end w-auto ml-4"
+      sse-swap="update_message#{{ index }}"
+      hx-swap="beforeend"
+    >
+      {% match content.first() %}
+        {% when UserContent::Text with (text) %} 
+          {{ text.text|markdown_cmark|safe }}
+        {% else %}
+      {% endmatch %}
+    </div>
+  {% when Message::Assistant with { content } %}
+    <div
+      class="message text-gray-200"
+      sse-swap="update_message#{{ index }}"
+      hx-swap="beforeend"
+    > 
+      {% match content.first() %}
+        {% when AssistantContent::Text with (text) %} 
+          {{ text.text|markdown_cmark|safe }}
+        {% else %}
+      {% endmatch %}
+    </div>
+{% endmatch %}

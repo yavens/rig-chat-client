@@ -1,0 +1,22 @@
+{
+  "name": "testing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch:tailwind": "npx @tailwindcss/cli -i ./assets/main.css -o ./static/main.css --watch",
+    "watch:rust": "cargo watch -w templates -w src -x run",
+    "dev": "npx concurrently -k \"npm run watch:tailwind\" \"npm run watch:rust\""
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.0.9",
+    "tailwindcss": "^4.0.9"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "htmx.org": "^2.0.4"
+  }
+}
