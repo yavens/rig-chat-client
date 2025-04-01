@@ -1,0 +1,66 @@
+.loading-bubble {
+  width: 1rem;
+  height: 1rem;
+
+  margin: 0;
+  margin: 0.25rem;
+
+  border-radius: 50%;
+
+  animation: loading 1.5s ease-in-out infinite;
+}
+
+.loading-bubble:nth-child(1) {
+  animation-delay: calc(-2 / 3 * 1.5s);
+}
+.loading-bubble:nth-child(2) {
+  animation-delay: calc(-1 / 3 * 1.5s);
+}
+
+.message.htmx-added {
+  opacity: 0;
+  transform: scale(0%);
+}
+
+.message {
+  opacity: 1;
+  transform: scale(100%);
+
+  transition: all 0.2s ease-in-out;
+}
+
+.message .text {
+  animation: fade-in 0.2s ease-in-out;
+}
+
+.message img {
+  border-radius: var(--radius-xl);
+}
+
+.message > p:not(:first-child) {
+  margin-top: 0.5rem;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes loading {
+  0% {
+    transform: scale(50%);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(75%);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(50%);
+    opacity: 0.2;
+  }
+}
