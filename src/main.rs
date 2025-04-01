@@ -6,16 +6,16 @@ use actix_web::{
     web::{Data, FormConfig, PayloadConfig},
     App, HttpServer,
 };
-use state::prompt::PromptState;
 use dotenv::dotenv;
 use rig::providers::openai;
+use state::prompt::PromptState;
 use tools::GenerateImage;
 
 mod api;
 mod site;
+pub mod state;
 pub mod templates;
 pub mod tools;
-pub mod state;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -31,12 +31,12 @@ async fn main() -> Result<(), anyhow::Error> {
     let history = Data::new(Mutex::new(PromptState::default()));
 
     let server = HttpServer::new(move || {
-        let agent: Data<rig::agent::Agent<openai::CompletionModel>> = Data::new(
-            openai::Client::from_env()
-                .agent(openai::GPT_4O)
-                .tool(GenerateImage {})
-                .build(),
-        );
+        let agent = openai::Client::from_env()
+            .agent(openai::GPT_4O)
+            .tool(GenerateImage {})
+            .build();
+
+        let agent = Data::new(agent);
 
         App::new()
             .wrap(middleware::Logger::default())
