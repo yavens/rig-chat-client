@@ -6,19 +6,19 @@ use actix_web::{
     web::{Data, FormConfig, PayloadConfig},
     App, HttpServer,
 };
-use state::prompt::PromptState;
 use dotenv::dotenv;
 use rig::providers::openai;
+use state::prompt::PromptState;
 use tools::GenerateImage;
 
 mod api;
 mod site;
+pub mod state;
 pub mod templates;
 pub mod tools;
-pub mod state;
 
 #[tokio::main]
-async fn main() -> Result<(), anyhow::Error> {
+async fn main() -> std::io::Result<()> {
     dotenv().ok();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
@@ -33,17 +33,12 @@ async fn main() -> Result<(), anyhow::Error> {
     let server = HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
-            
             .app_data(Data::clone(&history))
             .app_data(PayloadConfig::new(1000000 * 250))
             .app_data(FormConfig::default().limit(1000000 * 250))
-            
             .service(Files::new("/static", "./static"))
-            
             .service(site::index::get)
     });
 
-    let _ = server.bind(("0.0.0.0", port))?.run().await?;
-
-    Ok(())
+    server.bind(("0.0.0.0", port))?.run().await
 }
