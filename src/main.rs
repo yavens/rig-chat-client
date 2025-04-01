@@ -31,13 +31,24 @@ async fn main() -> std::io::Result<()> {
     let history: Data<Mutex<PromptState>> = Data::new(Mutex::new(PromptState::default()));
 
     let server = HttpServer::new(move || {
+        let agent = openai::Client::from_env()
+            .agent(openai::GPT_4O) // Any text completion model can be used here thanks to Rig’s structure
+            .build();
+
+        let agent = Data::new(agent);
+
         App::new()
             .wrap(middleware::Logger::default())
+            .app_data(agent)
             .app_data(Data::clone(&history))
             .app_data(PayloadConfig::new(1000000 * 250))
             .app_data(FormConfig::default().limit(1000000 * 250))
             .service(Files::new("/static", "./static"))
+            // Site Routes
             .service(site::index::get)
+            // Api Routes
+            .service(api::connect::get)
+            .service(api::prompt::post)
     });
 
     server.bind(("0.0.0.0", port))?.run().await
