@@ -34,6 +34,7 @@ async fn main() -> Result<(), anyhow::Error> {
         App::new()
             .wrap(middleware::Logger::default())
             
+            .app_data(Data::clone(&history))
             .app_data(PayloadConfig::new(1000000 * 250))
             .app_data(FormConfig::default().limit(1000000 * 250))
             

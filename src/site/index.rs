@@ -11,7 +11,7 @@ pub async fn get(state: Data<Mutex<PromptState>>) -> Result<impl Responder> {
 
     Ok(IndexTemplate {
         chat_history: ChatHistoryTemplate {
-            messages: state.messages.clone(),
+            messages: vec![],
         },
     })
 }
