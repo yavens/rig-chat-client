@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script
+      src="https://unpkg.com/htmx.org@2.0.4"
+      integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://unpkg.com/htmx-ext-sse@2.2.2"
+      crossorigin="anonymous"
+    ></script>
+
+    <script src="/static/js/index.js"></script>
+
+    <link href="/static/main.css" rel="stylesheet" />
+    <link href="/static/index.css" rel="stylesheet" />
+    <title>Page</title>
+
+    <style>
+      .message.htmx-added {
+        opacity: 0;
+        transform: scale(0%);
+      }
+
+      .message {
+        opacity: 1;
+        transform: scale(100%);
+
+        transition: all 0.2s ease-in-out;
+      }
+
+      .message .text {
+        animation: fade-in 0.2s ease-in-out;
+      }
+
+      .message img {
+        border-radius: var(--radius-xl);
+      }
+
+      .message > p:not(:first-child) {
+        margin-top: 0.5rem;
+      }
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body
+    hx-ext="sse"
+    sse-connect="/api/connect"
+    class="bg-gray-800 absolute top-0 left-0 h-full w-full flex justify-center"
+  >
+    <div
+      id="app"
+      class="flex flex-col h-full w-full max-w-3xl px-4 gap-4"
+    >
+      <div
+        sse-swap="chat_history"
+        hx-target="#chat-history"
+        hx-swap="innerHTML settle:none"
+        style="display: none"
+      ></div>
+      <div
+        sse-swap="play_audio, queue_audio"
+        hx-swap="none"
+        style="display: none"
+      ></div>
+      <div class="flex grow overflow-hidden overflow-x-clip relative">
+        <div
+          id="chat-history"
+          class="flex gap-4 flex-col w-full min-h-full overflow-y-auto pb-20 pt-4"
+          style="scrollbar-gutter: stable"
+          sse-swap="new_message"
+          hx-swap="beforeend"
+          hx-on="afterSettle: scrollToResponse()"
+        >
+          {{ chat_history|safe }}
+        </div>
+        <div class="absolute bottom-4 w-full overflow-clip px-4">
+          {% let prompt = "" %} {% include "prompt.html" %}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
