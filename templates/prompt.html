@@ -11,7 +11,8 @@
     id="prompt-form"
     class="bg-gray-600 rounded-xl flex flex-row px-4 py-2 gap-2 grow"
     hx-post="/api/prompt"   
-    hx-swap="none"
+    hx-target="#chat-history"
+    hx-swap="beforeend"
     hx-on::before-request="resetPrompt()"
   >
     <input
