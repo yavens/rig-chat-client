@@ -1,11 +1,12 @@
 use actix_web::{get, post, web::Form, Responder, Result};
-use askama::Template;
 use rig::{providers::openai, transcription::TranscriptionModel};
 use serde::{Deserialize, Serialize};
 
+use crate::templates::{FilledPromptTemplate, RecordingTemplate};
+
 #[get("/api/recording")]
 pub async fn get() -> Result<impl Responder> {
-    Ok(Recording {})
+    Ok(RecordingTemplate {})
 }
 
 #[derive(Deserialize, Serialize)]
@@ -31,15 +32,5 @@ pub async fn post(body: Form<PostParams>) -> Result<impl Responder> {
 
     let response = response.text;
 
-    Ok(FilledPrompt { prompt: response })
-}
-
-#[derive(Template)]
-#[template(path = "recording.html")]
-struct Recording {}
-
-#[derive(Template)]
-#[template(path = "prompt.html")]
-struct FilledPrompt {
-    prompt: String,
+    Ok(FilledPromptTemplate { prompt: response })
 }
