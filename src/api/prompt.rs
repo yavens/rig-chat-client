@@ -9,11 +9,11 @@ use rig::{
     agent::Agent,
     completion::{Chat, Completion, Prompt},
     message::Message,
-    providers::openai::CompletionModel,
+    providers::openai::CompletionModel, streaming::{StreamingChat, StreamingCompletion},
 };
 
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
+use std::{sync::Mutex, time::Instant};
 use tracing::debug;
 
 use crate::{state::prompt::PromptState, templates::MessageTemplate};
@@ -23,35 +23,94 @@ struct PromptParams {
     prompt: String,
 }
 
+async fn send_buffer(state: Data<Mutex<PromptState>>, index: usize, buffer: &mut Vec<String>) {
+    let new_message = buffer.join("");
+    buffer.clear();
+
+    let _ = state
+        .lock()
+        .unwrap()
+        .update_message(index, new_message)
+        .await;
+}
+
+async fn stream_response(
+    prompt: String,
+    agent: Data<Agent<CompletionModel>>,
+    state_mutex: Data<Mutex<PromptState>>,
+) {
+    let mut state = state_mutex.lock().unwrap();
+
+    let _ = state.send_message(Message::user(prompt.clone())).await;
+
+    let mut response = agent
+        .stream_chat(&prompt, state.messages.clone())
+        .await
+        .expect("Failed to create stream");
+
+    // Make sure to drop our lock on the Mutex so audio generation has access
+    // to the state transmitter
+    drop(state);
+
+    let mut token_buffer = vec![];
+
+    // The last time a token was sent to the client
+    let mut last_send = Instant::now();
+
+    // Whether or not a new message should be created before updating the contents
+    let mut create_new_message = true;
+
+    // The message to send an update too
+    let mut message_index = 0;
+
+    while let Some(chunk) = response.next().await {
+        let Ok(choice) = chunk else {
+            continue;
+        };
+
+        let piece = match choice {
+            rig::streaming::StreamingChoice::Message(message) => message,
+            _ => todo!()
+        };
+
+        // Create an empty message to start adding data to
+        if create_new_message {
+            let mut state = state_mutex.lock().unwrap();
+            message_index = state.send_message(Message::assistant("")).await;
+            create_new_message = false;
+            last_send = Instant::now();
+        }
+
+        token_buffer.push(piece.clone());
+
+        let now = Instant::now();
+
+        // Ensure that tokens are sent with a delay so SSE doesn't miss events
+        if now.duration_since(last_send).as_millis() > 5 {
+            let _ = send_buffer(state_mutex.clone(), message_index, &mut token_buffer).await;
+            last_send = now;
+        }
+    }
+
+    if token_buffer.len() >= 1 {
+        let _ = send_buffer(state_mutex.clone(), message_index, &mut token_buffer).await;
+    }
+
+    let state = state_mutex.lock().unwrap();
+    let _ = state.replace_chat_history().await;
+}
+
 #[post("/api/prompt")]
 pub async fn post(
     body: Form<PromptParams>,
     agent: Data<Agent<CompletionModel>>,
     state_mutex: Data<Mutex<PromptState>>,
 ) -> Result<impl Responder> {
-    let mut state = state_mutex.lock().expect("Failed to acquire lock");
     let prompt = body.prompt.clone();
 
     debug!("Responding to \"{}\"", prompt);
 
-    let response = agent.chat(prompt.clone(), state.messages.clone()).await;
+    actix_web::rt::spawn(stream_response(prompt, agent, state_mutex));
 
-    let Ok(response) = response else {
-        return Err(error::ErrorInternalServerError("Failed to get response"));
-    };
-
-    (*state).messages.push(Message::user(&prompt));
-    (*state).messages.push(Message::assistant(&response));
-
-    Ok(format!(
-        "{}{}",
-        MessageTemplate {
-            index: 0,
-            message: Message::user(&prompt)
-        },
-        MessageTemplate {
-            index: 0,
-            message: Message::assistant(response),
-        },
-    ))
+    Ok("")
 }
