@@ -4,7 +4,7 @@
     <p id="placeholder" class="self-center mt-auto mb-auto text-gray-200 text-2xl">No Chat History...</p>
 {% else %}
     {% for message in messages %} 
-        {% let index = loop.index %}
+        {% let index = loop.index - 1 %}
         {% include "message.html" %}
     {% endfor %}
 {% endif %}
