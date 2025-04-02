@@ -50,6 +50,8 @@ async fn main() -> std::io::Result<()> {
             // Api Routes
             .service(api::connect::get)
             .service(api::prompt::post)
+            .service(api::recording::get)
+            .service(api::recording::post)
     });
 
     server.bind(("0.0.0.0", port))?.run().await
