@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write, time::SystemTime};
+use std::{fs::{self, File}, io::Write, time::SystemTime};
 
 use rig::{
     completion::ToolDefinition,
@@ -47,6 +47,10 @@ impl Tool for GenerateImage {
             .duration_since(SystemTime::UNIX_EPOCH)
             .expect("Couldn't get time")
             .as_millis();
+
+        if !fs::exists("static/temp/images").expect("Can't confirm existence") {
+            let _ = fs::create_dir_all("static/temp/images");
+        }
 
         let path = format!("static/temp/images/{now}.png");
 
