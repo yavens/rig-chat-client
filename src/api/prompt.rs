@@ -9,18 +9,52 @@ use rig::{
     agent::Agent,
     completion::{Chat, Completion, Prompt},
     message::Message,
-    providers::openai::CompletionModel, streaming::{StreamingChat, StreamingCompletion},
+    providers::openai::CompletionModel,
+    streaming::{StreamingChat, StreamingCompletion},
+    tool::Tool,
 };
 
 use serde::{Deserialize, Serialize};
 use std::{sync::Mutex, time::Instant};
 use tracing::debug;
 
-use crate::{state::prompt::PromptState, templates::MessageTemplate};
+use crate::{state::prompt::PromptState, tools::GenerateImage};
 
 #[derive(Serialize, Deserialize)]
 struct PromptParams {
     prompt: String,
+}
+
+async fn handle_tool_call(
+    agent: &Data<Agent<CompletionModel>>,
+    state: Data<Mutex<PromptState>>,
+    name: String,
+    args: serde_json::Value,
+) {
+    if name == GenerateImage::NAME {
+        let agent = agent.clone();
+
+        // Handle image generation non-blocking
+        actix_web::rt::spawn(async move {
+            let mut state = state.lock().unwrap();
+            let image = state.send_message(Message::assistant("")).await;
+
+            let response = agent.tools.call(&name, args.to_string()).await;
+
+            if let Ok(data_uri) = response {
+                let _ = state
+                    .update_message(
+                        image,
+                        format!(
+                            r#"<img src="{}"/>"#,
+                            serde_json::from_str::<String>(&data_uri)
+                                .expect("Failed to convert data uri")
+                        ),
+                    )
+                    .await;
+            }
+        });
+    }
 }
 
 async fn send_buffer(state: Data<Mutex<PromptState>>, index: usize, buffer: &mut Vec<String>) {
@@ -70,7 +104,11 @@ async fn stream_response(
 
         let piece = match choice {
             rig::streaming::StreamingChoice::Message(message) => message,
-            _ => todo!()
+            rig::streaming::StreamingChoice::ToolCall(name, _description, args) => {
+                // Process tool calls and move to the next chunk
+                handle_tool_call(&agent, state_mutex.clone(), name, args).await;
+                continue;
+            }
         };
 
         // Create an empty message to start adding data to

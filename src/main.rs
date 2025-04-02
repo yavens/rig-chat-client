@@ -33,6 +33,7 @@ async fn main() -> std::io::Result<()> {
     let server = HttpServer::new(move || {
         let agent = openai::Client::from_env()
             .agent(openai::GPT_4O) // Any text completion model can be used here thanks to Rig’s structure
+            .tool(GenerateImage {})
             .build();
 
         let agent = Data::new(agent);
